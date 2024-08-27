@@ -16,6 +16,18 @@ public class DbContexto : DbContext
 
     public DbSet<Administradores> Administrador {get; set;} = default!;
 
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Administradores>().HasData(
+            new Administradores
+            {
+                Id = 1,
+                Email = "adm@teste.com",
+                Senha = "1234",
+                Perfil = "ADM"
+            }
+        );
+    }
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         var stringConexao = _configuracaoAppSettings.GetConnectionString("SqlServer")?.ToString();
@@ -23,4 +35,5 @@ public class DbContexto : DbContext
         if (!optionsBuilder.IsConfigured || !string.IsNullOrEmpty(stringConexao))
             optionsBuilder.UseSqlServer(stringConexao);
     }
+    // SEED , FUNÇÃO PARA CADASTRAR O ADM INICIAL
 }
