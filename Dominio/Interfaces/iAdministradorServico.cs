@@ -3,7 +3,7 @@ using MinimalAPI.DTOs;
 
 namespace MinimalAPI.Dominio.Interfaces;
 
-public interface iAdministradorServico
+public interface IAdministradorServico
 {
     Administradores? Login(LoginDTO loginDTO);
 }

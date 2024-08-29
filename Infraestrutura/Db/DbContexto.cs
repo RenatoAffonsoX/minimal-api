@@ -15,6 +15,7 @@ public class DbContexto : DbContext
     }
 
     public DbSet<Administradores> Administrador {get; set;} = default!;
+    public DbSet<Veiculos> veiculo {get; set;} = default!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
