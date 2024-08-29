@@ -20,7 +20,7 @@ var app = builder.Build();
 
 app.MapGet("/", () => "Hello World!");
 
-app.MapPost("/login", ([FromBody]LoginDTO loginDTO, iAdministradorServico administradorServico) => {
+app.MapPost("/login", ([FromBody]LoginDTO loginDTO, IAdministradorServico administradorServico) => {
     if (administradorServico.Login(loginDTO) != null)
         return Results.Ok("Login efetuado");
     else
