@@ -5,10 +5,14 @@ using MinimalAPI.Dominio.Interfaces;
 using MinimalAPI.Dominio.Servicos;
 using MinimalAPI.DTOs;
 using MinimalAPI.Infraestrutura.Db;
+using MinimalAPI.Dominio.ModelViews;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddScoped<iAdministradorServico, AdministradorServico>();
+builder.Services.AddScoped<IAdministradorServico, AdministradorServico>();
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<DbContexto>(Options => 
 {
@@ -16,9 +20,10 @@ builder.Services.AddDbContext<DbContexto>(Options =>
         builder.Configuration.GetConnectionString("SqlServer")        
     );
 });
+
 var app = builder.Build();
 
-app.MapGet("/", () => "Hello World!");
+app.MapGet("/", () => Results.Json(new Home()));
 
 app.MapPost("/login", ([FromBody]LoginDTO loginDTO, IAdministradorServico administradorServico) => {
     if (administradorServico.Login(loginDTO) != null)
@@ -26,4 +31,9 @@ app.MapPost("/login", ([FromBody]LoginDTO loginDTO, IAdministradorServico admini
     else
         return Results.Unauthorized();
 });
+
+app.UseSwagger();
+app.UseSwaggerUI();
+
+
 app.Run();
