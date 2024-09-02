@@ -37,7 +37,7 @@ public class VeiculosServico : IVeiculosServico
         return _contexto.veiculo.Where(v => v.Id ==id).FirstOrDefault();
     }
 
-    public List<Veiculos> Todos(int pagina = 1, string? nome = null, string? marca = null)
+    public List<Veiculos> Todos(int? pagina = 1, string? nome = null, string? marca = null)
     {
         var query = _contexto.veiculo.AsQueryable();
 
@@ -48,7 +48,9 @@ public class VeiculosServico : IVeiculosServico
         
         int itensPorPagina = 10;
 
-        query = query.Skip((pagina -1) * itensPorPagina).Take(itensPorPagina);
+        if (pagina != null)
+            query = query.Skip(((int)pagina -1) * itensPorPagina).Take(itensPorPagina);
+
         return query.ToList();
     }
 }
