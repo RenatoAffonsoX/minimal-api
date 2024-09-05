@@ -43,7 +43,25 @@ app.MapPost("/administradores/login", ([FromBody]LoginDTO loginDTO, IAdministrad
 
 #region VEICULOS
 
+ErrosDeValidacao validaDTO(VeiculoDTO veiculoDTO)
+{
+    var validacao = new ErrosDeValidacao();
+
+    if (string.IsNullOrEmpty(veiculoDTO.Nome))
+        validacao.Mensagens.Add("Verificar o campo Nome");
+    if (string.IsNullOrEmpty(veiculoDTO.Marca))
+        validacao.Mensagens.Add("Verificar o campo marca");
+    if (veiculoDTO.Nome.Length < 4)
+        validacao.Mensagens.Add("Verificar o campo");
+    
+    return validacao;
+}
 app.MapPost("/veiculos", ([FromBody] VeiculoDTO veiculoDTO, IVeiculosServico veiculosServico) => {
+    
+    var validacao = validaDTO(veiculoDTO);
+    
+    if (validacao.Mensagens.Count > 0)
+        return Results.BadRequest(validacao);
     
     var veiculo = new Veiculos{
         Nome = veiculoDTO.Nome,
@@ -75,8 +93,12 @@ app.MapGet("/veiculos/{id}", ([FromRoute] int id, IVeiculosServico veiculosServi
 app.MapPut("/veiculos/{id}", ([FromRoute] int id, VeiculoDTO veiculoDTO, IVeiculosServico veiculosServico) => {
     
     var veiculo = veiculosServico.BuscaPorID(id);
+    var validacao = validaDTO(veiculoDTO);
 
     if (veiculo == null) return Results.NotFound();
+    
+    if (validacao.Mensagens.Count > 0)
+        return Results.BadRequest(validacao);
 
     veiculo.Nome = veiculoDTO.Nome;
     veiculo.Marca = veiculoDTO.Marca;
