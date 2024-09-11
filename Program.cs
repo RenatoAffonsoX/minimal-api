@@ -8,6 +8,7 @@ using MinimalAPI.Infraestrutura.Db;
 using MinimalAPI.Dominio.ModelViews;
 using MinimalAPI.Dominio.Entidades;
 using MinimalAPI.Dominio.Enums;
+using Microsoft.AspNetCore.Mvc.TagHelpers;
 
 #region BUILDER
 var builder = WebApplication.CreateBuilder(args);
@@ -36,7 +37,7 @@ app.MapGet("/", () => Results.Json(new Home())).WithTags("Home");
 #endregion
 
 #region Administradores
-
+ 
 app.MapPost("/administradores/login", ([FromBody]LoginDTO loginDTO, IAdministradorServico administradorServico) => {
     if (administradorServico.Login(loginDTO) != null)
         return Results.Ok("Login efetuado");
@@ -73,6 +74,18 @@ app.MapPost("/administradores", ([FromBody] AdministradorDTO administradorDTO, I
 }).WithTags("Administradores");
 
 app.MapGet("/administradores", ([FromQuery] int? pagina, IAdministradorServico administradorServico) => {
+    var adms = new List<AdministradorModelView>();
+    var administrador = administradorServico.Todos(pagina);
+
+    foreach (var adm in administrador)
+    {
+        adms.Add(new AdministradorModelView
+        {
+            Id = adm.Id,
+            Email = adm.Email,
+            Perfil = adm.Perfil
+        });
+    }
     return Results.Ok(administradorServico.Todos(pagina));
 }).WithTags("Administradores");
 

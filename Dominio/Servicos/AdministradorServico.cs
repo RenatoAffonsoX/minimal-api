@@ -45,6 +45,6 @@ public class AdministradorServico : IAdministradorServico
 
     Administradores IAdministradorServico.Todos(int? pagina)
     {
-        throw new NotImplementedException();
+        //throw new NotImplementedException();
     }
 }
