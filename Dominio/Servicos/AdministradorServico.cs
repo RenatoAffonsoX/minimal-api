@@ -42,9 +42,4 @@ public class AdministradorServico : IAdministradorServico
         
         return query.ToList();
     }
-
-    Administradores IAdministradorServico.Todos(int? pagina)
-    {
-        //throw new NotImplementedException();
-    }
 }
