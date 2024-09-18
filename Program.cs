@@ -69,7 +69,7 @@ app.MapGet("/", () => Results.Json(new Home())).WithTags("Home");
 
     var claims = new List<Claim>()
     {
-        new Claim(ClaimTypes.Email, administradores.Email),
+        new Claim("Email", administradores.Email),
         new Claim("Perfil", administradores.Perfil),
     };
 
