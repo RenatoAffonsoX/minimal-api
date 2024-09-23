@@ -15,6 +15,8 @@ using System.Text;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.Authorization;
 
 #region BUILDER
 var builder = WebApplication.CreateBuilder(args);
@@ -29,7 +31,9 @@ builder.Services.AddAuthentication(option => {
 }).AddJwtBearer(option => {
     option.TokenValidationParameters = new TokenValidationParameters{
         ValidateLifetime = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key))
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
+        ValidateIssuer = false,
+        ValidateAudience = false,
     };
 });
 
@@ -39,7 +43,33 @@ builder.Services.AddScoped<IAdministradorServico, AdministradorServico>();
 builder.Services.AddScoped<IVeiculosServico, VeiculosServico>();
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(Options => 
+{
+    Options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Insira o Token aqui"
+    });
+
+    Options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+});
 
 builder.Services.AddDbContext<DbContexto>(Options => 
 {
@@ -54,7 +84,7 @@ var app = builder.Build();
 
 #region HOME e LOGIN 
 
-app.MapGet("/", () => Results.Json(new Home())).WithTags("Home");
+app.MapGet("/", () => Results.Json(new Home())).AllowAnonymous().WithTags("Home");
 
 #endregion
 
@@ -71,6 +101,7 @@ app.MapGet("/", () => Results.Json(new Home())).WithTags("Home");
     {
         new Claim("Email", administradores.Email),
         new Claim("Perfil", administradores.Perfil),
+        new Claim(ClaimTypes.Role, administradores.Perfil),
     };
 
     var token = new JwtSecurityToken(
@@ -98,7 +129,7 @@ app.MapPost("/administradores/login", ([FromBody]LoginDTO loginDTO, IAdministrad
     }
     else
         return Results.Unauthorized();
-}).RequireAuthorization().WithTags("Administradores");
+}).AllowAnonymous().WithTags("Administradores");
 
 app.MapPost("/administradores", ([FromBody] AdministradorDTO administradorDTO, IAdministradorServico administradorServico) => {
     var validacao = new ErrosDeValidacao
@@ -126,7 +157,8 @@ app.MapPost("/administradores", ([FromBody] AdministradorDTO administradorDTO, I
     administradorServico.Incluir(administrador);
 
     return Results.Created($"/administrador/{administrador.Id}", administrador);
-}).WithTags("Administradores");
+}).RequireAuthorization(new AuthorizeAttribute {Roles = "Adm" })
+.WithTags("Administradores");
 
 app.MapGet("/administradores", ([FromQuery] int? pagina, IAdministradorServico administradorServico) => {
     var adms = new List<AdministradorModelView>();
@@ -141,14 +173,17 @@ app.MapGet("/administradores", ([FromQuery] int? pagina, IAdministradorServico a
             Perfil = adm.Perfil
         });
     }
-    return Results.Ok(administradorServico.Todos(pagina));
-}).RequireAuthorization().WithTags("Administradores");
+    return Results.Ok(adms);
+}).RequireAuthorization()
+.RequireAuthorization(new AuthorizeAttribute {Roles = "Adm" })
+.WithTags("Administradores");
 
 app.MapPost("/administradores/{id}", ([FromRoute] int id, IAdministradorServico administradorServico) => {
     var administrador = administradorServico.BuscarPorId(id);
     if (administrador == null) return Results.NotFound();
     return Results.Ok(administrador);
-}).WithTags("Administradores");
+}).RequireAuthorization(new AuthorizeAttribute {Roles = "Adm" })
+.WithTags("Administradores");
 
 #endregion
 
@@ -182,14 +217,18 @@ app.MapPost("/veiculos", ([FromBody] VeiculoDTO veiculoDTO, IVeiculosServico vei
     veiculosServico.Incluir(veiculo);
     
     return Results.Created($"/veiculo/{veiculo.Id}", veiculo);
-}).RequireAuthorization().WithTags("Veiculos");
+}).RequireAuthorization()
+.RequireAuthorization(new AuthorizeAttribute {Roles = "Adm,Editor" })
+.WithTags("Veiculos");
 
 app.MapGet("/veiculos", ([FromQuery] int? pagina, IVeiculosServico veiculosServico) => {
     
     var veiculos = veiculosServico.Todos(pagina);
 
     return Results.Ok(veiculos);
-}).RequireAuthorization().WithTags("Veiculos");
+}).RequireAuthorization()
+.RequireAuthorization(new AuthorizeAttribute {Roles = "Adm,Editor" })
+.WithTags("Veiculos");
 
 app.MapGet("/veiculos/{id}", ([FromRoute] int id, IVeiculosServico veiculosServico) => {
     
@@ -199,7 +238,9 @@ app.MapGet("/veiculos/{id}", ([FromRoute] int id, IVeiculosServico veiculosServi
 
     return Results.Ok(veiculo);
 
-}).RequireAuthorization().WithTags("Veiculos");
+}).RequireAuthorization()
+.RequireAuthorization(new AuthorizeAttribute {Roles = "Adm,Editor" })
+.WithTags("Veiculos");
 
 app.MapPut("/veiculos/{id}", ([FromRoute] int id, VeiculoDTO veiculoDTO, IVeiculosServico veiculosServico) => {
     
@@ -218,7 +259,9 @@ app.MapPut("/veiculos/{id}", ([FromRoute] int id, VeiculoDTO veiculoDTO, IVeicul
     veiculosServico.Atualizar(veiculo);
     return Results.Ok(veiculo);
 
-}).RequireAuthorization().WithTags("Veiculos");
+}).RequireAuthorization()
+.RequireAuthorization(new AuthorizeAttribute {Roles = "Adm" })
+.WithTags("Veiculos");
 
 app.MapDelete("/veiculos/{id}", ([FromRoute] int id, IVeiculosServico veiculosServico) => {
     
@@ -228,7 +271,9 @@ app.MapDelete("/veiculos/{id}", ([FromRoute] int id, IVeiculosServico veiculosSe
 
     return Results.NoContent();
 
-}).RequireAuthorization().WithTags("Veiculos");
+}).RequireAuthorization()
+.RequireAuthorization(new AuthorizeAttribute {Roles = "Adm" })
+.WithTags("Veiculos");
 
 #endregion
 
